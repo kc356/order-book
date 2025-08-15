@@ -27,7 +27,7 @@ private:
     std::map<Price, OrderPointers, std::less<>> asks_;
     std::unordered_map<OrderId, OrderEntry> orders_;
 
-    bool CanMatch(Side side, Price price) const {
+    bool CanMatch(const Side side, const Price price) const {
         if (side == Side::Buy) {
             if (asks_.empty())
                 return false;
@@ -57,10 +57,10 @@ private:
                 break;
 
             while (!bids.empty() && !asks.empty()) {
-                auto& bid = bids.front();
-                auto& ask = asks.front();
+                const auto& bid = bids.front();
+                const auto& ask = asks.front();
 
-                Quantity quantity = std::min(bid->GetRemainingQuantity(), ask->GetRemainingQuantity());
+                const Quantity quantity = std::min(bid->GetRemainingQuantity(), ask->GetRemainingQuantity());
 
                 bid->Fill(quantity);
                 ask->Fill(quantity);
@@ -111,6 +111,16 @@ public:
         if (orders_.contains(order->GetOrderId()))
             return {};
 
+        if (order->GetOrderType() == OrderType::Market) {
+            if (order->GetSide() == Side::Buy && !asks_.empty()) {
+                const auto& [worstAsk, _] = *asks_.begin();
+                order->ToGoodTillCancel(worstAsk);
+            } else if (order->GetSide() == Side::Sell && !bids_.empty()) {
+                const auto& [worstBid, _] = *bids_.begin();
+                order->ToGoodTillCancel(worstBid);
+            } else return {};
+        }
+
         if (order->GetOrderType() == OrderType::FillAndKill && !CanMatch(order->GetSide(), order->GetPrice()))
             return {};
 
@@ -131,7 +141,7 @@ public:
 
     }
 
-    void CancelOrder(OrderId orderId) {
+    void CancelOrder(const OrderId orderId) {
         if (!orders_.contains(orderId))
             return;
 
@@ -139,13 +149,13 @@ public:
         orders_.erase(orderId);
 
         if (order->GetSide() == Side::Sell) {
-            auto price  = order->GetPrice();
+            const auto price  = order->GetPrice();
             auto& orders = asks_.at(price);
             orders.erase(iterator);
             if (orders.empty())
                 asks_.erase(price);
         } else {
-            auto price  = order->GetPrice();
+            const auto price  = order->GetPrice();
             auto& orders = bids_.at(price);
             orders.erase(iterator);
             if (orders.empty())
@@ -153,7 +163,7 @@ public:
         }
     }
 
-    Trades ModifyOrder(OrderModify order) {
+    Trades ModifyOrder(const OrderModify &order) {
         if (!orders_.contains(order.GetOrderId()))
             return {};
 
@@ -169,9 +179,9 @@ public:
         bidInfos.reserve(orders_.size());
         askInfos.reserve(orders_.size());
 
-        auto CreateLevelInfos = [](Price price, const OrderPointers& orders) {
-            return LevelInfo { price, std::accumulate(orders.begin(), orders.end(), (Quantity)0,
-                [](Quantity runningSum, const OrderPointer& order) {
+        auto CreateLevelInfos = [](const Price price, const OrderPointers& orders) {
+            return LevelInfo { price, std::accumulate(orders.begin(), orders.end(), static_cast<Quantity>(0),
+                [](const Quantity runningSum, const OrderPointer& order) {
                 return runningSum + order->GetRemainingQuantity();
             })};
         };
