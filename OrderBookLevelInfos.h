@@ -14,6 +14,8 @@ using LevelInfos = std::pmr::vector<LevelInfo>;
 class OrderBookLevelInfos {
 public:
     OrderBookLevelInfos(LevelInfos  bids, LevelInfos  asks) : bids_(std::move(bids)), asks_(std::move(asks)) {};
+    const LevelInfos& GetBids() const { return bids_; }
+    const LevelInfos& GetAsks() const { return asks_; }
 private:
     LevelInfos bids_;
     LevelInfos asks_;
