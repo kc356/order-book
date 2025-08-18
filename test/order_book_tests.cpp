@@ -94,7 +94,7 @@ private:
         std::vector<std::string_view> columns;
         columns.reserve(5);
         std::size_t start_index{}, end_index{};
-        while ((end_index = str.find(delimeter, start_index)) && end_index != std::string::npos)
+        while ((end_index = str.find(delimeter, start_index)) != std::string::npos)
         {
             auto distance = end_index - start_index;
             auto column = str.substr(start_index, distance);
@@ -120,10 +120,10 @@ private:
             return OrderType::FillAndKill;
         else if (str == "GoodTillCancel")
             return OrderType::GoodTillCancel;
-        // else if (str == "GoodForDay")
-        //     return OrderType::GoodForDay;
-        // else if (str == "FillOrKill")
-        //     return OrderType::FillOrKill;
+        else if (str == "GoodForDay")
+            return OrderType::GoodForDay;
+        else if (str == "FillOrKill")
+            return OrderType::FillOrKill;
         else if (str == "Market")
             return OrderType::Market;
         else throw std::logic_error("Unknown OrderType");
@@ -158,13 +158,20 @@ public:
     {
         Informations actions;
         actions.reserve(1'000);
+        Result result;
+        bool resultFound = false;
 
         std::string line;
         std::ifstream file{ path };
+        
+        if (!file.is_open()) {
+            throw std::runtime_error("Could not open file: " + path.string());
+        }
+
         while (std::getline(file, line))
         {
             if (line.empty())
-                break;
+                continue;
 
             const bool isResult = line.at(0) == 'R';
             const bool isAction = !isResult;
@@ -172,30 +179,26 @@ public:
             if (isAction)
             {
                 Information action;
-
                 auto isValid = TryParseInformation(line, action);
                 if (!isValid)
                     continue;
-
                 actions.push_back(action);
             }
-            else
+            else if (isResult)
             {
-                if (!file.eof())
-                    throw std::logic_error("Result should only be specified at the end.");
-
-                Result result;
-
                 auto isValid = TryParseResult(line, result);
                 if (!isValid)
                     continue;
-
-                return { actions, result };
+                resultFound = true;
+                break; // Found result, stop reading
             }
-
         }
 
-        throw std::logic_error("No result specified.");
+        if (!resultFound) {
+            throw std::logic_error("No result specified in file: " + path.string());
+        }
+
+        return { actions, result };
     }
 };
 
@@ -203,10 +206,25 @@ public:
 class OrderbookTestsFixture : public googletest::TestWithParam<const char*>
 {
 private:
-    const static inline std::filesystem::path Root{ std::filesystem::current_path() };
-    const static inline std::filesystem::path TestFolder{ "testFiles" };
+    const static inline std::filesystem::path GetTestFilesDir() {
+        // __FILE__ gives us the path to the current source file
+        std::filesystem::path currentFile(__FILE__);
+        // Go up from test/order_book_tests.cpp to test/, then to testFiles
+        return currentFile.parent_path() / "testFiles";
+    }
+    
+
+    
 public:
-    const static inline std::filesystem::path TestFolderPath{ Root / TestFolder };
+    const static inline std::filesystem::path TestFolderPath{ GetTestFilesDir() };
+
+    void SetUp() override {
+        std::cout << "Looking for test files in: " << TestFolderPath << std::endl;
+        
+        if (!std::filesystem::exists(TestFolderPath)) {
+            std::cout << "Test directory does not exist at: " << TestFolderPath << std::endl;
+        }
+    }
 };
 
 TEST_P(OrderbookTestsFixture, OrderbookTestSuite)
