@@ -9,8 +9,8 @@ class Trade {
 public:
     Trade(const TradeInfo& bitTrade, const TradeInfo& askTrade): bidTrade_{bitTrade}, askTrade_{askTrade} {};
 
-    const TradeInfo& GetBitTrade() const {return bidTrade_;}
-    const TradeInfo& GetAskTrade() const {return askTrade_;}
+    const TradeInfo& getBitTrade() const {return bidTrade_;}
+    const TradeInfo& getAskTrade() const {return askTrade_;}
 
 private:
     TradeInfo bidTrade_;

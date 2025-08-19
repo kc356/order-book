@@ -12,28 +12,34 @@
 
 class Order {
 public:
-    Order(OrderType orderType, OrderId orderId, Side side, Price price, Quantity quantity): orderType_{orderType}, orderId_{orderId}, side_{side}, price_{price}, initialQuantity_{quantity}, remainingQuantity_ {quantity} {};
+    Order(const OrderType orderType, const OrderId orderId, const Side side, const Price price, const Quantity quantity):
+        orderType_{orderType},
+        orderId_{orderId},
+        side_{side},
+        price_{price},
+        initialQuantity_{quantity},
+        remainingQuantity_{quantity} { };
 
     // Market order
-    Order(OrderId orderId, Side side, Quantity quantity)
+    Order(const OrderId orderId, const Side side,const Quantity quantity)
         :Order(OrderType::Market, orderId, side, Constants::InvalidPrice, quantity) {}
 
-    OrderId GetOrderId() const {return orderId_;}
-    Side GetSide() const { return side_;}
-    Price GetPrice() const {return price_;}
-    OrderType GetOrderType() const { return orderType_;}
-    Quantity GetInitialQuantity() const { return initialQuantity_;}
-    Quantity GetRemainingQuantity() const {return remainingQuantity_;}
-    Quantity GetFilledQuantity() const {return GetInitialQuantity() - GetRemainingQuantity();}
-    bool isFilled() const {return GetRemainingQuantity()==0;}
-    void Fill(const Quantity quantity) {
-        if (quantity > GetRemainingQuantity())
-            throw std::logic_error(std::format("Order ({}) cannot be filled for more than its remaining quantity.", GetOrderId()));
+    OrderId getOrderId() const {return orderId_;}
+    Side getSide() const { return side_;}
+    Price getPrice() const {return price_;}
+    OrderType getOrderType() const { return orderType_;}
+    Quantity getInitialQuantity() const { return initialQuantity_;}
+    Quantity getRemainingQuantity() const {return remainingQuantity_;}
+    Quantity getFilledQuantity() const {return getInitialQuantity() - getRemainingQuantity();}
+    bool isFilled() const {return getRemainingQuantity()==0;}
+    void fill(const Quantity quantity) {
+        if (quantity > getRemainingQuantity())
+            throw std::logic_error(std::format("Order ({}) cannot be filled for more than its remaining quantity.", getOrderId()));
         remainingQuantity_ -= quantity;
     }
-    void ToGoodTillCancel(Price price) {
-        if (GetOrderType() != OrderType::Market)
-            throw std::logic_error(std::format("Order ({}) cannot have its price adjusted, only market orders can.", GetOrderId()));
+    void toGoodTillCancel(Price price) {
+        if (getOrderType() != OrderType::Market)
+            throw std::logic_error(std::format("Order ({}) cannot have its price adjusted, only market orders can.", getOrderId()));
 
         price_ = price;
         orderType_ = OrderType::GoodTillCancel;

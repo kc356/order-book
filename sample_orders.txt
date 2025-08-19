@@ -1,0 +1,28 @@
+# Sample Order Book Data
+# Format: <side> <type> <price> <quantity>
+# Side: B (Buy) or S (Sell)
+# Type: GTC (GoodTillCancel), FAK (FillAndKill), M (Market)
+# Price: Integer price (use 0 for Market orders)
+# Quantity: Integer quantity
+
+# Buy orders (bids)
+B GTC 100 50
+B GTC 99 75
+B GTC 98 100
+B GTC 97 25
+B GTC 96 150
+
+# Sell orders (asks)
+S GTC 101 60
+S GTC 102 80
+S GTC 103 40
+S GTC 104 90
+S GTC 105 70
+
+# Market orders (will be converted to GTC with best available price)
+B M 0 30
+S M 0 45
+
+# Fill and Kill orders
+B FAK 95 20
+S FAK 106 35

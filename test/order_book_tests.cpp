@@ -36,7 +36,7 @@ using Results = std::vector<Result>;
 struct InputHandler
 {
 private:
-    std::uint32_t ToNumber(const std::string_view& str) const
+    static std::uint32_t toNumber(const std::string_view& str)
     {
         std::int64_t value{};
         std::from_chars(str.data(), str.data() + str.size(), value);
@@ -45,23 +45,23 @@ private:
         return static_cast<std::uint32_t>(value);
     }
 
-    bool TryParseResult(const std::string_view& str, Result& result) const
+    static bool tryParseResult(const std::string_view& str, Result& result)
     {
         if (str.at(0) != 'R')
             return false;
 
-        auto values = Split(str, ' ');
-        result.allCount_ = ToNumber(values[1]);
-        result.bidCount_ = ToNumber(values[2]);
-        result.askCount_ = ToNumber(values[3]);
+        const auto values = Split(str, ' ');
+        result.allCount_ = toNumber(values[1]);
+        result.bidCount_ = toNumber(values[2]);
+        result.askCount_ = toNumber(values[3]);
 
         return true;
     }
 
-    bool TryParseInformation(const std::string_view& str, Information& action) const
+    static bool tryParseInformation(const std::string_view& str, Information& action)
     {
-        auto value = str.at(0);
-        auto values = Split(str, ' ');
+        const auto value = str.at(0);
+        const auto values = Split(str, ' ');
         if (value == 'A')
         {
             action.type_ = ActionType::Add;
@@ -89,7 +89,7 @@ private:
         return true;
     }
 
-    std::vector<std::string_view> Split(const std::string_view& str, char delimeter) const
+    static std::vector<std::string_view> Split(const std::string_view& str, char delimeter)
     {
         std::vector<std::string_view> columns;
         columns.reserve(5);
@@ -105,7 +105,7 @@ private:
         return columns;
     }
 
-    Side ParseSide(const std::string_view& str) const
+    static Side ParseSide(const std::string_view& str)
     {
         if (str == "B")
             return Side::Buy;
@@ -114,7 +114,7 @@ private:
         else throw std::logic_error("Unknown Side");
     }
 
-    OrderType ParseOrderType(const std::string_view& str) const
+    static OrderType ParseOrderType(const std::string_view& str)
     {
         if (str == "FillAndKill")
             return OrderType::FillAndKill;
@@ -129,36 +129,36 @@ private:
         else throw std::logic_error("Unknown OrderType");
     }
 
-    Price ParsePrice(const std::string_view& str) const
+    static Price ParsePrice(const std::string_view& str)
     {
         if (str.empty())
             throw std::logic_error("Unknown Price");
 
-        return ToNumber(str);
+        return toNumber(str);
     }
 
-    Quantity ParseQuantity(const std::string_view& str) const
+    static Quantity ParseQuantity(const std::string_view& str)
     {
         if (str.empty())
             throw std::logic_error("Unknown Quantity");
 
-        return ToNumber(str);
+        return toNumber(str);
     }
 
-    OrderId ParseOrderId(const std::string_view& str) const
+    static OrderId ParseOrderId(const std::string_view& str)
     {
         if (str.empty())
             throw std::logic_error("Empty OrderId");
 
-        return static_cast<OrderId>(ToNumber(str));
+        return static_cast<OrderId>(toNumber(str));
     }
 
 public:
-    std::tuple<Informations, Result> GetInformations(const std::filesystem::path& path) const
+    static std::tuple<Informations, Result> GetInformations(const std::filesystem::path& path)
     {
         Informations actions;
         actions.reserve(1'000);
-        Result result;
+        Result result { };
         bool resultFound = false;
 
         std::string line;
@@ -173,21 +173,16 @@ public:
             if (line.empty())
                 continue;
 
-            const bool isResult = line.at(0) == 'R';
-            const bool isAction = !isResult;
-
-            if (isAction)
+            if (line.at(0) != 'R')
             {
-                Information action;
-                auto isValid = TryParseInformation(line, action);
-                if (!isValid)
+                Information action { };
+                if (!tryParseInformation(line, action))
                     continue;
                 actions.push_back(action);
             }
-            else if (isResult)
+            else
             {
-                auto isValid = TryParseResult(line, result);
-                if (!isValid)
+                if (!tryParseResult(line, result))
                     continue;
                 resultFound = true;
                 break; // Found result, stop reading
@@ -208,7 +203,7 @@ class OrderbookTestsFixture : public googletest::TestWithParam<const char*>
 private:
     const static inline std::filesystem::path GetTestFilesDir() {
         // __FILE__ gives us the path to the current source file
-        std::filesystem::path currentFile(__FILE__);
+        const std::filesystem::path currentFile(__FILE__);
         // Go up from test/order_book_tests.cpp to test/, then to testFiles
         return currentFile.parent_path() / "testFiles";
     }
@@ -232,7 +227,7 @@ TEST_P(OrderbookTestsFixture, OrderbookTestSuite)
     // Arrange
     const auto file = OrderbookTestsFixture::TestFolderPath / GetParam();
 
-    InputHandler handler;
+    constexpr InputHandler handler;
     const auto [actions, result] = handler.GetInformations(file);
 
     auto GetOrder = [](const Information& action)
@@ -264,7 +259,7 @@ TEST_P(OrderbookTestsFixture, OrderbookTestSuite)
         {
         case ActionType::Add:
         {
-            const Trades& trades = orderbook.AddOrder(GetOrder(action));
+            const Trades& trades = orderbook.addOrder(GetOrder(action));
         }
         break;
         case ActionType::Modify:
@@ -289,7 +284,7 @@ TEST_P(OrderbookTestsFixture, OrderbookTestSuite)
     ASSERT_EQ(orderbookInfos.GetAsks().size(), result.askCount_);
 }
 
-INSTANTIATE_TEST_CASE_P(Tests, OrderbookTestsFixture, googletest::ValuesIn({
+INSTANTIATE_TEST_SUITE_P(Tests, OrderbookTestsFixture, googletest::ValuesIn({
     "Match_GoodTillCancel.txt",
     "Match_FillAndKill.txt",
     "Match_FillOrKill_Hit.txt",
