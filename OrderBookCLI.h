@@ -20,7 +20,7 @@ private:
     
     static constexpr int PRICE_WIDTH = 8;
     static constexpr int QUANTITY_WIDTH = 10;
-    static constexpr int DEPTH_WIDTH = 15;
+    static constexpr int SIDE_WIDTH = 15;
     
     static void PrintHeader() {
         std::cout << "\n" << std::string(80, '=') << "\n";
@@ -56,7 +56,7 @@ private:
         // Print asks (sell side) - reverse order to show lowest ask at top
         std::cout << std::setw(PRICE_WIDTH) << "PRICE" 
                   << std::setw(QUANTITY_WIDTH) << "QUANTITY" 
-                  << std::setw(DEPTH_WIDTH) << "DEPTH" << "\n";
+                  << std::setw(SIDE_WIDTH) << "SIDE" << "\n";
         std::cout << std::string(33, '-') << "\n";
         
         std::vector<LevelInfo> asksCopy(asks.begin(), asks.end());
@@ -65,7 +65,7 @@ private:
         for (const auto&[price_, quantity_] : asksCopy) {
             std::cout << std::setw(PRICE_WIDTH) << price_
                       << std::setw(QUANTITY_WIDTH) << quantity_
-                      << std::setw(DEPTH_WIDTH) << "SELL" << "\n";
+                      << std::setw(SIDE_WIDTH) << "SELL" << "\n";
         }
         
         std::cout << std::string(33, '-') << "\n";
@@ -74,7 +74,7 @@ private:
         for (const auto&[price_, quantity_] : bids) {
             std::cout << std::setw(PRICE_WIDTH) << price_
                       << std::setw(QUANTITY_WIDTH) << quantity_
-                      << std::setw(DEPTH_WIDTH) << "BUY" << "\n";
+                      << std::setw(SIDE_WIDTH) << "BUY" << "\n";
         }
         
         std::cout << std::string(33, '-') << "\n";
@@ -95,9 +95,7 @@ private:
                   << std::setw(10) << "REMAINING" 
                   << std::setw(10) << "FILLED" << "\n";
         std::cout << std::string(60, '-') << "\n";
-        
-        // Note: This is a simplified view since OrderBook doesn't expose individual orders
-        // You might want to add a method to get all orders for display
+
         std::cout << "Order details not available in current implementation\n";
         std::cout << std::string(60, '-') << "\n";
     }
