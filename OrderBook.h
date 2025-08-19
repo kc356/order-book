@@ -20,7 +20,6 @@ using OrderPointer = std::shared_ptr<Order>;
 using OrderPointers = std::list<OrderPointer>;
 
 class OrderBook {
-private:
     struct OrderEntry {
         OrderPointer order_ {nullptr};
         OrderPointers::iterator location_;
@@ -116,17 +115,17 @@ public:
             return {};
 
         if (order->getOrderType() == OrderType::Market) {
+            // Set to worst ask/bid price and fill it if possible
             if (order->getSide() == Side::Buy && !asks_.empty()) {
-                const auto& [worstAsk, _] = *asks_.begin();
+                const auto& [worstAsk, _] = *asks_.rbegin();
                 order->toGoodTillCancel(worstAsk);
             } else if (order->getSide() == Side::Sell && !bids_.empty()) {
-                const auto& [worstBid, _] = *bids_.begin();
+                const auto& [worstBid, _] = *bids_.rbegin();
                 order->toGoodTillCancel(worstBid);
             } else return {};
         }
 
-        if (order->getOrderType() == OrderType
-            ::FillAndKill && !CanMatch(order->getSide(), order->getPrice()))
+        if (order->getOrderType() == OrderType::FillAndKill && !CanMatch(order->getSide(), order->getPrice()))
             return {};
 
         OrderPointers::iterator iterator;
@@ -143,7 +142,6 @@ public:
 
         orders_.insert({ order->getOrderId(), OrderEntry{ order, iterator} });
         return MatchOrders();
-
     }
 
     void CancelOrder(const OrderId orderId) {
