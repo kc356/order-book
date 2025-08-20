@@ -201,7 +201,7 @@ public:
 class OrderbookTestsFixture : public googletest::TestWithParam<const char*>
 {
 private:
-    const static inline std::filesystem::path GetTestFilesDir() {
+    static inline std::filesystem::path GetTestFilesDir() {
         // __FILE__ gives us the path to the current source file
         const std::filesystem::path currentFile(__FILE__);
         // Go up from test/order_book_tests.cpp to test/, then to testFiles
